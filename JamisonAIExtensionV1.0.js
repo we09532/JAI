@@ -1,6 +1,4 @@
 
-// Made with PenguinBuilder 3.0
-// use PenguinBuilder at "https://chickencuber.github.io/PenguinBuilder/"
 (function(Scratch) {
   const blocks = [];
   const vars = {};
