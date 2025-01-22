@@ -30,29 +30,6 @@
                     renderingEngine: navigator.product
                 };
 
-                // Get Geolocation
-                let locationInfo = {};
-                if (navigator.geolocation) {
-                    await new Promise((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(
-                            position => {
-                                locationInfo = {
-                                    latitude: position.coords.latitude,
-                                    longitude: position.coords.longitude,
-                                    accuracy: position.coords.accuracy
-                                };
-                                resolve();
-                            },
-                            error => {
-                                locationInfo = { error: error.message };
-                                resolve();
-                            }
-                        );
-                    });
-                } else {
-                    locationInfo = { error: 'Geolocation not supported' };
-                }
-
                 // Get Date and Time
                 const dateTime = new Date().toLocaleString('en-US', { timeZoneName: 'short' });
 
@@ -61,7 +38,6 @@
                     ip: ipData.ip,
                     batteryInfo,
                     browserInfo,
-                    locationInfo,
                     dateTime
                 };
 
@@ -89,3 +65,4 @@
     <p>Please wait while the AI thinks about how to roast you today...</p>
 </body>
 </html>
+
